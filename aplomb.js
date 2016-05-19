@@ -2,7 +2,6 @@ var RBTree = require('bintrees').RBTree
 var fnv = require('hash.fnv')
 
 function Aplomb (options) {
-    //this.delegations = []
     this.sort = options.sort
     this.delegations = new RBTree(function (a, b) { return options.sort(a.key, b.key) })
     this.extract = options.extract
@@ -110,9 +109,6 @@ Aplomb.prototype.removeDelegate = function (delegate) {
 
             return { buckets: buckets, delegates: delegates }
         }
-
-        //this.delegations.unshift({ buckets: buckets, delegates: delegates, version: this.incrementVersion(this.delegations[0].version) })
-        //this.delegations.insert({ buckets: buckets, delegates: delegates, version: this.incrementVersion(table.version) })
     }
 
     return this.distribute([ null ], 256)
@@ -135,8 +131,6 @@ Aplomb.prototype.replaceDelegate = function (oldUrl, newUrl) {
         }
     }
 
-    //this.delegations.unshift({ buckets: buckets, delegates: delegates, version: this.incrementVersion(this.delegations[0].version) })
-    //this.delegations.insert({ buckets: buckets, delegates: delegates, version: this.incrementVersion(table.version) })
     return { buckets: buckets, delegates: delegates }
 }
 
