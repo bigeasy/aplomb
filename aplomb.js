@@ -24,7 +24,7 @@ Aplomb.prototype.getDelegates = function (connection) {
     var key = this.extract(connection), delegates = [], table = this.delegations.max().table
     this.delegations.each(function (table) {
         table = table.table
-        delegates.push(table.buckets[fnv(0, new Buffer(key), 0, Buffer.byteLength(key)) & 0xFF].url)
+        delegates.push(table.buckets[fnv(0, new Buffer(key), 0, Buffer.byteLength(key)) % table.buckets.length].url)
     })
     return delegates.filter(function (del, i, set) {
         return (set.indexOf(del) == i)
