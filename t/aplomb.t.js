@@ -2,7 +2,7 @@ var monotonic = require('monotonic')
 require('proof')(10, prove)
 
 function prove(assert) {
-    var Router = require('../../../aplomb.js'),
+    var Router = require('..'),
         delegates = [
             'http://192.168.0.14:8080',
             'http://192.168.0.14:5432/blah/two',
