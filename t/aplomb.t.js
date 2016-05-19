@@ -10,7 +10,7 @@ function prove(assert) {
         ],
         aplomb = new Aplomb({
             incrementVersion: function (x) {return x + 1},
-            sort: function (a, b) {
+            compare: function (a, b) {
                 return a - b
             },
             extract: function (obj) {

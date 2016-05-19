@@ -2,11 +2,11 @@ var RBTree = require('bintrees').RBTree
 var fnv = require('hash.fnv')
 
 function Aplomb (options) {
-    this.sort = options.sort
-    this.delegations = new RBTree(function (a, b) { return options.sort(a.key, b.key) })
+    this.compare = options.compare
+    this.delegations = new RBTree(function (a, b) { return options.compare(a.key, b.key) })
     this.extract = options.extract
     this.incrementVersion = options.incrementVersion
-    this.connections = new RBTree(function (a, b) { return options.sort(a.key, b.key) })
+    this.connections = new RBTree(function (a, b) { return options.compare(a.key, b.key) })
 }
 
 Aplomb.prototype.connectionTree = function (version) {
@@ -146,17 +146,6 @@ Aplomb.prototype.addConnection = function (key, connection) {
 }
 
 Aplomb.prototype.removeConnection = function (connection) {
-    /*
-   var i = 0, indices = []
-   for (var I = this.connections.length; i < I;) {
-        var tree = this.connections[i].connections
-        tree.remove(connection)
-        if (tree.size == 0) {
-            this.connections.splice(i, 1)
-            I--
-        } else { i++ }
-    }
-   */
     var tree, iterator = this.connections.iterator()
 
     while (tree = iterator.prev()) {
@@ -168,14 +157,6 @@ Aplomb.prototype.removeConnection = function (connection) {
 }
 
 Aplomb.prototype.getConnection = function (connection) {
-    /*
-    for (var conn, i = 0, I = this.connections.length; i < I; i++) {
-        if (conn = this.connections[i].connections.find(connection)) {
-            return conn
-        }
-    }
-    return null
-    */
     var delegate, tree, iterator = this.connections.iterator()
 
     while (tree = iterator.prev()) {
