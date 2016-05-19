@@ -1,5 +1,5 @@
 var monotonic = require('monotonic')
-require('proof')(17, prove)
+require('proof')(10, prove)
 
 function prove(assert) {
     var Router = require('../../../aplomb.js'),
