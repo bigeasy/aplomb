@@ -190,7 +190,7 @@ Aplomb.prototype.getDelegationKeys = function () {
 Aplomb.prototype.evictable = function (delegate) {
     var tree, current, min, tree, max, iterator, key = this.delegations.max().key,
         connections = this.connections.iterator()
-    //for (var i = 0, I = this.connections.length; i < I;) {
+
     max = connections.prev()
     while (tree = connections.prev()) {
 
