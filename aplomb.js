@@ -187,14 +187,8 @@ Aplomb.prototype.getConnection = function (connection) {
     return null
 }
 
-Aplomb.prototype.getTable = function (table) {
-    var delegations
-
-    if (delegations = this.delegations.find(table)) {
-        return delegations
-    }
-
-    return null
+Aplomb.prototype.removeTable = function (key) {
+    return this.delegations.remove({ key: key })
 }
 
 Aplomb.prototype.addTable = function (table, key) {
@@ -202,6 +196,14 @@ Aplomb.prototype.addTable = function (table, key) {
         table: table,
         key: key
     })
+}
+
+Aplomb.prototype.getDelegationKeys = function () {
+    var keys = []
+    this.delegations.each(function (entry) {
+        keys.push(entry.key)
+    })
+    return keys.reverse()
 }
 
 Aplomb.prototype.evictable = function (delegate) {

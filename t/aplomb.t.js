@@ -91,7 +91,13 @@ function prove(assert) {
     'sass'})[0]) > -1), 'matched')
 
     var evict = aplomb.evictable('http://192.168.0.14:8080')
+
     console.log('evicted', evict)
+
+    assert(aplomb.getDelegationKeys(), [ 8, 7, 6, 5, 4, 3, 2, 1 ], 'keys')
+    assert(!!aplomb.removeTable(1), 'remove delegation')
+    assert(!aplomb.removeTable(1), 'remove delegation does not exist')
+
     /*
     assert((evict.username == 'user'), 'evicted old')
 
