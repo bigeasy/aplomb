@@ -1,5 +1,5 @@
 var monotonic = require('monotonic')
-require('proof')(10, prove)
+require('proof')(13, prove)
 
 function prove(assert) {
     var Aplomb = require('..'),
@@ -21,7 +21,7 @@ function prove(assert) {
     delegates.forEach(function (del, i) {
         table = aplomb.addDelegate(del)
         console.log(table)
-        aplomb.addTable(table, i + 1)
+        aplomb.addDelegation(table, i + 1)
     })
 
     table = aplomb.delegations.max().table,
@@ -30,9 +30,9 @@ function prove(assert) {
     assert(table.buckets[120].url, delegates[1], 'true')
 
     table = aplomb.addDelegate('http://192.173.0.14:2381')
-    aplomb.addTable(table, 4)
+    aplomb.addDelegation(table, 4)
     table = aplomb.addDelegate('http://192.173.0.14:2382')
-    aplomb.addTable(table, 5)
+    aplomb.addDelegation(table, 5)
 
     assert(aplomb.delegations.max().table.delegates.indexOf('http://192.173.0.14:2381') > -1,
     'delegate added')
@@ -47,14 +47,14 @@ function prove(assert) {
     assert((indices == 51), 'buckets redistributed')
 
     table = aplomb.replaceDelegate('http://192.173.0.14:2382', 'http://192.173.0.14:2383')
-    aplomb.addTable(table, 6)
+    aplomb.addDelegation(table, 6)
 
     assert(aplomb.delegations.max().table.delegates.indexOf('http://192.173.0.14:2382') == -1, 'delegate replaced')
 
     table = aplomb.removeDelegate('http://192.173.0.14:2381')
-    aplomb.addTable(table, 7)
+    aplomb.addDelegation(table, 7)
     table = aplomb.removeDelegate('http://192.173.0.14:2383')
-    aplomb.addTable(table, 8)
+    aplomb.addDelegation(table, 8)
 
     assert((aplomb.delegations.max().key == 8), 'version incremented')
 
@@ -95,8 +95,8 @@ function prove(assert) {
     console.log('evicted', evict)
 
     assert(aplomb.getDelegationKeys(), [ 8, 7, 6, 5, 4, 3, 2, 1 ], 'keys')
-    assert(!!aplomb.removeTable(1), 'remove delegation')
-    assert(!aplomb.removeTable(1), 'remove delegation does not exist')
+    assert(!!aplomb.removeDelegation(1), 'remove delegation')
+    assert(!aplomb.removeDelegation(1), 'remove delegation does not exist')
 
     /*
     assert((evict.username == 'user'), 'evicted old')

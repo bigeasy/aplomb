@@ -187,11 +187,11 @@ Aplomb.prototype.getConnection = function (connection) {
     return null
 }
 
-Aplomb.prototype.removeTable = function (key) {
+Aplomb.prototype.removeDelegation = function (key) {
     return this.delegations.remove({ key: key })
 }
 
-Aplomb.prototype.addTable = function (table, key) {
+Aplomb.prototype.addDelegation = function (table, key) {
     this.delegations.insert({
         table: table,
         key: key
