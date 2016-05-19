@@ -93,17 +93,9 @@ Aplomb.prototype.removeDelegate = function (delegate) {
         if (delegates.length > 1) {
             delegates = delegates.splice(delegates.indexOf(delegate), 1)
 
-            for (var b = 0, I = buckets.length; b < I; b++) {
+            for (var i = 0, b = 0, B = buckets.length; b < B; b++) {
                 if (table.buckets[b].url == delegate) {
-                    indices.push(b)
-                }
-            }
-
-            var distribution = Math.floor(indices.length, table.delegates.length - 1)
-
-            for (var b = 0, I = indices.length; b < I; b++) {
-                for (var i=0; i<distribution; i++) {
-                    buckets[indices[b]].url = delegates[i]
+                    table.buckets[b].url = delegates[i++ % delegates.length]
                 }
             }
 
