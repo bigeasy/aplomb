@@ -5,7 +5,6 @@ function Aplomb (options) {
     this.compare = options.compare
     this.delegations = new RBTree(function (a, b) { return options.compare(a.key, b.key) })
     this.extract = options.extract
-    this.incrementVersion = options.incrementVersion
     this.connections = new RBTree(function (a, b) { return options.compare(a.key, b.key) })
 }
 
