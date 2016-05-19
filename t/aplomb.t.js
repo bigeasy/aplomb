@@ -2,13 +2,13 @@ var monotonic = require('monotonic')
 require('proof')(10, prove)
 
 function prove(assert) {
-    var Router = require('..'),
+    var Aplomb = require('..'),
         delegates = [
             'http://192.168.0.14:8080',
             'http://192.168.0.14:5432/blah/two',
             'http://192.168.0.14:2345'
         ],
-        router = new Router({
+        aplomb = new Aplomb({
             incrementVersion: function (x) {return x + 1},
             sort: function (a, b) {
                 return a - b
@@ -19,25 +19,25 @@ function prove(assert) {
         }), table, distribution
 
     delegates.forEach(function (del, i) {
-        table = router.addDelegate(del)
+        table = aplomb.addDelegate(del)
         console.log(table)
-        router.addTable(table, i + 1)
+        aplomb.addTable(table, i + 1)
     })
 
-    table = router.delegations.max().table,
+    table = aplomb.delegations.max().table,
     distribution = Math.floor(256, table.delegates.length)
 
     assert(table.buckets[120].url, delegates[1], 'true')
 
-    table = router.addDelegate('http://192.173.0.14:2381')
-    router.addTable(table, 4)
-    table = router.addDelegate('http://192.173.0.14:2382')
-    router.addTable(table, 5)
+    table = aplomb.addDelegate('http://192.173.0.14:2381')
+    aplomb.addTable(table, 4)
+    table = aplomb.addDelegate('http://192.173.0.14:2382')
+    aplomb.addTable(table, 5)
 
-    assert(router.delegations.max().table.delegates.indexOf('http://192.173.0.14:2381') > -1,
+    assert(aplomb.delegations.max().table.delegates.indexOf('http://192.173.0.14:2381') > -1,
     'delegate added')
 
-    var indices = 0, table = router.delegations.max().table
+    var indices = 0, table = aplomb.delegations.max().table
     for (var b in table.buckets) {
         if (table.buckets[b].url == 'http://192.173.0.14:2381') {
             indices++
@@ -46,68 +46,68 @@ function prove(assert) {
 
     assert((indices == 51), 'buckets redistributed')
 
-    table = router.replaceDelegate('http://192.173.0.14:2382', 'http://192.173.0.14:2383')
-    router.addTable(table, 6)
+    table = aplomb.replaceDelegate('http://192.173.0.14:2382', 'http://192.173.0.14:2383')
+    aplomb.addTable(table, 6)
 
-    assert(router.delegations.max().table.delegates.indexOf('http://192.173.0.14:2382') == -1, 'delegate replaced')
+    assert(aplomb.delegations.max().table.delegates.indexOf('http://192.173.0.14:2382') == -1, 'delegate replaced')
 
-    table = router.removeDelegate('http://192.173.0.14:2381')
-    router.addTable(table, 7)
-    table = router.removeDelegate('http://192.173.0.14:2383')
-    router.addTable(table, 8)
+    table = aplomb.removeDelegate('http://192.173.0.14:2381')
+    aplomb.addTable(table, 7)
+    table = aplomb.removeDelegate('http://192.173.0.14:2383')
+    aplomb.addTable(table, 8)
 
-    assert((router.delegations.max().key == 8), 'version incremented')
+    assert((aplomb.delegations.max().key == 8), 'version incremented')
 
-    assert((distribution == Math.floor(256, router.delegations.max().table.delegates.length)),
+    assert((distribution == Math.floor(256, aplomb.delegations.max().table.delegates.length)),
     'distribution reproduced')
 
-    var b = router.connectionTree(12)
+    var b = aplomb.connectionTree(12)
 
     assert((b.key == 12), 'generated connection table')
 
 
-    router.addConnection(1, { username: 'user', password: 'pass' })
+    aplomb.addConnection(1, { username: 'user', password: 'pass' })
 
-    router.addConnection(2, { username: 'user', password: 'pass' })
-    router.addConnection(2, { username: 'user', password: 'pass' })
+    aplomb.addConnection(2, { username: 'user', password: 'pass' })
+    aplomb.addConnection(2, { username: 'user', password: 'pass' })
 
-    router.addConnection(6, { username: 'userr', password: 'ppass' })
-    router.addConnection(6, { username: 'fewer', password: 'sass' })
+    aplomb.addConnection(6, { username: 'userr', password: 'ppass' })
+    aplomb.addConnection(6, { username: 'fewer', password: 'sass' })
 
-    router.removeConnection({ username: 'fewer', password: 'sass' })
+    aplomb.removeConnection({ username: 'fewer', password: 'sass' })
 
-    router.addConnection(6, { username: 'bluer', password: 'sass' })
+    aplomb.addConnection(6, { username: 'bluer', password: 'sass' })
 
-    router.removeConnection({ username: 'user', password: 'pass' })
+    aplomb.removeConnection({ username: 'user', password: 'pass' })
 
-    assert((router.connections.size == 3), 'trees generated')
-    router.addConnection(2, { username: 'user', password: 'pass' })
-    router.addConnection(2, { username: 'userr', password: 'ppass' })
+    assert((aplomb.connections.size == 3), 'trees generated')
+    aplomb.addConnection(2, { username: 'user', password: 'pass' })
+    aplomb.addConnection(2, { username: 'userr', password: 'ppass' })
 
-    assert((router.connections.max().key == 6), 'connection version\
+    assert((aplomb.connections.max().key == 6), 'connection version\
     managed')
 
-    assert((delegates.indexOf(router.getDelegates({username : 'bluer', password:
+    assert((delegates.indexOf(aplomb.getDelegates({username : 'bluer', password:
     'sass'})[0]) > -1), 'matched')
 
-    var evict = router.evictable('http://192.168.0.14:8080')
+    var evict = aplomb.evictable('http://192.168.0.14:8080')
     console.log('evicted', evict)
     /*
     assert((evict.username == 'user'), 'evicted old')
 
-    assert((router.getConnection({username: 'user', password: 'pass'}).username
+    assert((aplomb.getConnection({username: 'user', password: 'pass'}).username
     == 'user'), 'got connection')
 
-    assert((router.getConnection({}) == null), 'not found')
+    assert((aplomb.getConnection({}) == null), 'not found')
 
     for (var e, del = 0, I = delegates.length; del < I; del++) {
-        while (e = router.evictable(delegates[del])) {
+        while (e = aplomb.evictable(delegates[del])) {
             console.log('evicting', e)
-            router.removeConnection(e)
+            aplomb.removeConnection(e)
         }
-        assert((router.evictable(delegates[del]) == null), 'all evicted')
+        assert((aplomb.evictable(delegates[del]) == null), 'all evicted')
     }
 
-    assert(router.getTable({ version: monotonic.parse('2.0') }).version[0] == 2, 'fetched table')
+    assert(aplomb.getTable({ version: monotonic.parse('2.0') }).version[0] == 2, 'fetched table')
     */
 }
