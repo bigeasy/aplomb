@@ -136,7 +136,7 @@ Aplomb.prototype.replaceDelegate = function (oldUrl, newUrl) {
 
 Aplomb.prototype.addConnection = function (key, connection) {
     var tree
-    if (tree = this.connections.find(key)) {
+    if (tree = this.connections.find({ key: key })) {
         tree.connections.insert(connection)
     } else {
         tree = this.connectionTree(key)
