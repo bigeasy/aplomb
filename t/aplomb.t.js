@@ -1,119 +1,195 @@
-var monotonic = require('monotonic')
-require('proof')(13, prove)
+require('proof')(22, prove)
 
 function prove(assert) {
-    var Aplomb = require('..'),
-        delegates = [
-            'http://192.168.0.14:8080',
-            'http://192.168.0.14:5432/blah/two',
-            'http://192.168.0.14:2345'
-        ],
-        aplomb = new Aplomb({
-            incrementVersion: function (x) {return x + 1},
-            compare: function (a, b) {
-                return a - b
-            },
-            extract: function (obj) {
-                return obj.username + ':' + obj.password
-            }
-        }), table, distribution
+    var Aplomb = require('..')
 
-    delegates.forEach(function (del, i) {
-        table = aplomb.addDelegate(del)
-        console.log(table)
-        aplomb.addDelegation(table, i + 1)
+    var aplomb = new Aplomb({
+        bucketCount: 7,
+        compare: function (a, b) { return a - b },
+        extract: function (connection) {
+            return connection.user + ':' + connection.password
+        }
     })
 
-    table = aplomb.delegations.max().table,
-    distribution = Math.floor(256, table.delegates.length)
+    assert(aplomb.getDelegate({ user: 'a', password: 'p' }), null, 'get delegate no delegations')
 
-    assert(table.buckets[120].url, delegates[1], 'true')
+    var delegation = aplomb.addDelegate('127.0.0.1:8080')
 
-    table = aplomb.addDelegate('http://192.173.0.14:2381')
-    aplomb.addDelegation(table, 4)
-    table = aplomb.addDelegate('http://192.173.0.14:2382')
-    aplomb.addDelegation(table, 5)
+    assert(delegation, {
+        buckets: [
+            '127.0.0.1:8080',
+            '127.0.0.1:8080',
+            '127.0.0.1:8080',
+            '127.0.0.1:8080',
+            '127.0.0.1:8080',
+            '127.0.0.1:8080',
+            '127.0.0.1:8080'
+        ],
+        delegates: [ '127.0.0.1:8080' ]
+    }, 'add delegate')
 
-    assert(aplomb.delegations.max().table.delegates.indexOf('http://192.173.0.14:2381') > -1,
-    'delegate added')
+    aplomb.addDelegation(1, delegation)
 
-    var indices = 0, table = aplomb.delegations.max().table
-    for (var b in table.buckets) {
-        if (table.buckets[b].url == 'http://192.173.0.14:2381') {
-            indices++
-        }
+    assert(aplomb.getDelegate({ user: 'a', password: 'p' }), '127.0.0.1:8080', 'get delegate')
+
+    var delegates = aplomb.getDelegates({ user: 'u', password: 'p' })
+    assert(delegates, [ '127.0.0.1:8080' ], 'delegates')
+
+    delegation = aplomb.addDelegate('127.0.0.1:8081')
+
+    assert(delegation, {
+        buckets: [
+            '127.0.0.1:8081',
+            '127.0.0.1:8081',
+            '127.0.0.1:8081',
+            '127.0.0.1:8081',
+            '127.0.0.1:8080',
+            '127.0.0.1:8080',
+            '127.0.0.1:8080'
+        ],
+        delegates: [ '127.0.0.1:8080', '127.0.0.1:8081' ]
+    }, 'add delegate')
+
+    aplomb.addDelegation(2, delegation)
+
+    delegates = aplomb.getDelegates({ user: 'u', password: 'b' })
+    assert(delegates, [ '127.0.0.1:8081', '127.0.0.1:8080' ], 'multiple delegates')
+
+    delegates = aplomb.getDelegates({ user: 'u', password: 'a' })
+    assert(delegates, [ '127.0.0.1:8080' ], 'duplicate delegates')
+
+    delegation = aplomb.removeDelegate('127.0.0.1:8081')
+    assert(delegation, {
+        buckets: [
+            '127.0.0.1:8080',
+            '127.0.0.1:8080',
+            '127.0.0.1:8080',
+            '127.0.0.1:8080',
+            '127.0.0.1:8080',
+            '127.0.0.1:8080',
+            '127.0.0.1:8080'
+        ],
+        delegates: [ '127.0.0.1:8080' ]
+    }, 'remove down to one')
+
+    aplomb.addDelegation(3, delegation)
+
+    delegates = aplomb.getDelegates({ user: 'u', password: 'y' })
+    assert(delegates, [ '127.0.0.1:8080', '127.0.0.1:8081' ], 'delegate order changed')
+
+    delegation = aplomb.removeDelegate('127.0.0.1:8080')
+    assert(delegation, { buckets: null, delegates: [] }, 'remove down to zero')
+
+    aplomb.addDelegation(4, delegation)
+
+    assert(aplomb.getDelegate({ user: 'a', password: 'p' }), null, 'get delegate no delegates')
+
+    delegates = aplomb.getDelegates({ user: 'u', password: 'b' })
+    assert(delegates, [ '127.0.0.1:8080', '127.0.0.1:8081' ], 'delegate skip null')
+
+    delegation = aplomb.addDelegate('127.0.0.1:8081')
+    assert(delegation, {
+        buckets: [
+            '127.0.0.1:8081',
+            '127.0.0.1:8081',
+            '127.0.0.1:8081',
+            '127.0.0.1:8081',
+            '127.0.0.1:8081',
+            '127.0.0.1:8081',
+            '127.0.0.1:8081'
+        ],
+        delegates: [ '127.0.0.1:8081' ]
+    }, 'add after delete')
+    aplomb.addDelegation(5, delegation)
+
+    delegates = aplomb.getDelegates({ user: 'u', password: 'x' })
+    assert(delegates, [ '127.0.0.1:8081', '127.0.0.1:8080' ], 'delegates after empty delegation')
+
+    aplomb.addDelegation(6, aplomb.addDelegate('127.0.0.1:8080'))
+
+    delegation = aplomb.replaceDelegate('127.0.0.1:8080', '127.0.0.1:8082')
+    assert(delegation, {
+        buckets: [
+            '127.0.0.1:8082',
+            '127.0.0.1:8082',
+            '127.0.0.1:8082',
+            '127.0.0.1:8082',
+            '127.0.0.1:8081',
+            '127.0.0.1:8081',
+            '127.0.0.1:8081'
+        ],
+        delegates: [ '127.0.0.1:8081', '127.0.0.1:8082' ]
+    }, 'replace')
+    aplomb.addDelegation(7, delegation)
+
+    delegates = aplomb.getDelegates({ user: 'u', password: 'b' })
+    assert(delegates, [ '127.0.0.1:8082', '127.0.0.1:8080', '127.0.0.1:8081' ], 'delegates after replace')
+
+    for (var i = 0; i < 6; i++) {
+        aplomb.removeDelegation(i)
     }
 
-    assert((indices == 51), 'buckets redistributed')
+    delegates = aplomb.getDelegates({ user: 'u', password: 'b' })
+    assert(delegates, [ '127.0.0.1:8082', '127.0.0.1:8080' ], 'delegates after remove delegation')
 
-    table = aplomb.replaceDelegate('http://192.173.0.14:2382', 'http://192.173.0.14:2383')
-    aplomb.addDelegation(table, 6)
+    var delegations = aplomb.getDelegations()
+    assert(delegations, [
+      { key: 7,
+        buckets:
+         [ '127.0.0.1:8082',
+           '127.0.0.1:8082',
+           '127.0.0.1:8082',
+           '127.0.0.1:8082',
+           '127.0.0.1:8081',
+           '127.0.0.1:8081',
+           '127.0.0.1:8081' ],
+        delegates: [ '127.0.0.1:8081', '127.0.0.1:8082' ] },
+      { key: 6,
+        buckets:
+         [ '127.0.0.1:8080',
+           '127.0.0.1:8080',
+           '127.0.0.1:8080',
+           '127.0.0.1:8080',
+           '127.0.0.1:8081',
+           '127.0.0.1:8081',
+           '127.0.0.1:8081' ],
+        delegates: [ '127.0.0.1:8081', '127.0.0.1:8080' ] }
+    ], 'delegations')
 
-    assert(aplomb.delegations.max().table.delegates.indexOf('http://192.173.0.14:2382') == -1, 'delegate replaced')
+    delegation = aplomb.addDelegate('127.0.0.1:8080')
+    assert(delegation, {
+        buckets: [
+            '127.0.0.1:8080',
+            '127.0.0.1:8080',
+            '127.0.0.1:8082',
+            '127.0.0.1:8082',
+            '127.0.0.1:8080',
+            '127.0.0.1:8081',
+            '127.0.0.1:8081'
+        ],
+        delegates: [ '127.0.0.1:8081', '127.0.0.1:8082', '127.0.0.1:8080' ]
+    }, 'three delegates')
+    aplomb.addDelegation(8, delegation)
+    console.log(aplomb.getIndex({ user: 'u', password: 'd' }))
+    console.log(aplomb.getIndex({ user: 'u', password: 'c' }))
+    console.log(aplomb.getIndex({ user: 'u', password: 'g' }))
+    console.log(aplomb.getIndex({ user: 'u', password: 'b' }))
+    console.log(aplomb.getIndex({ user: 'u', password: 'a' }))
+    console.log(aplomb.getIndex({ user: 'u', password: 'e' }))
+    console.log(aplomb.getIndex({ user: 'u', password: 'i' }))
 
-    table = aplomb.removeDelegate('http://192.173.0.14:2381')
-    aplomb.addDelegation(table, 7)
-    table = aplomb.removeDelegate('http://192.173.0.14:2383')
-    aplomb.addDelegation(table, 8)
+    aplomb.addConnection(6, { user: 'u', password: 'd' })
+    assert(aplomb.getConnection({ user: 'u', password: 'd' }), { user: 'u', password: 'd' }, 'find')
+    aplomb.removeConnection({ user: 'u', password: 'd' })
+    assert(aplomb.getConnection({ user: 'u', password: 'd' }), null, 'not found')
+    aplomb.addConnection(6, { user: 'u', password: 'd' })
+    aplomb.addConnection(6, { user: 'u', password: 'g' })
+    aplomb.removeConnection({ user: 'u', password: 'd' })
+    assert(aplomb.getConnection({ user: 'u', password: 'd' }), null, 'not found again')
+    aplomb.addConnection(6, { user: 'u', password: 'd' })
 
-    assert((aplomb.delegations.max().key == 8), 'version incremented')
-
-    assert((distribution == Math.floor(256, aplomb.delegations.max().table.delegates.length)),
-    'distribution reproduced')
-
-    var b = aplomb.connectionTree(12)
-
-    assert((b.key == 12), 'generated connection table')
-
-
-    aplomb.addConnection(1, { username: 'user', password: 'pass' })
-
-    aplomb.addConnection(2, { username: 'user', password: 'pass' })
-    aplomb.addConnection(2, { username: 'user', password: 'pass' })
-
-    aplomb.addConnection(6, { username: 'userr', password: 'ppass' })
-    aplomb.addConnection(6, { username: 'fewer', password: 'sass' })
-
-    aplomb.removeConnection({ username: 'fewer', password: 'sass' })
-
-    aplomb.addConnection(6, { username: 'bluer', password: 'sass' })
-
-    aplomb.removeConnection({ username: 'user', password: 'pass' })
-
-    assert((aplomb.connections.size == 3), 'trees generated')
-    aplomb.addConnection(2, { username: 'user', password: 'pass' })
-    aplomb.addConnection(2, { username: 'userr', password: 'ppass' })
-
-    assert((aplomb.connections.max().key == 6), 'connection version\
-    managed')
-
-    assert((delegates.indexOf(aplomb.getDelegates({username : 'bluer', password:
-    'sass'})[0]) > -1), 'matched')
-
-    var evict = aplomb.evictable('http://192.168.0.14:8080')
-
-    console.log('evicted', evict)
-
-    assert(aplomb.getDelegationKeys(), [ 8, 7, 6, 5, 4, 3, 2, 1 ], 'keys')
-    assert(!!aplomb.removeDelegation(1), 'remove delegation')
-    assert(!aplomb.removeDelegation(1), 'remove delegation does not exist')
-
-    /*
-    assert((evict.username == 'user'), 'evicted old')
-
-    assert((aplomb.getConnection({username: 'user', password: 'pass'}).username
-    == 'user'), 'got connection')
-
-    assert((aplomb.getConnection({}) == null), 'not found')
-
-    for (var e, del = 0, I = delegates.length; del < I; del++) {
-        while (e = aplomb.evictable(delegates[del])) {
-            console.log('evicting', e)
-            aplomb.removeConnection(e)
-        }
-        assert((aplomb.evictable(delegates[del]) == null), 'all evicted')
+    var connection
+    while (connection = aplomb.evictable('127.0.0.1:8080')) {
+        aplomb.removeConnection(connection)
     }
-
-    assert(aplomb.getTable({ version: monotonic.parse('2.0') }).version[0] == 2, 'fetched table')
-    */
 }
