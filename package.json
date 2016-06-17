@@ -12,9 +12,8 @@
     "url": "git+https://github.com/demarius/aplomb.git"
   },
   "dependencies": {
-    "hash.fnv": "0.0.0",
-    "proof": "0.0.56",
-    "monotonic": "0.0.3",
+    "hash.fnv": "1.0.0",
+    "proof": "1.x",
     "bintrees": "1.0.1"
   },
   "license": "ISC",
