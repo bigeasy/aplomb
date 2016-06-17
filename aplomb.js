@@ -55,6 +55,14 @@ Aplomb.prototype.addDelegate = function (key, delegate) {
     if (this.delegations.size) {
         var delegation = this.delegations.max()
         var delegates = delegation.delegates
+        if (~delegates.indexOf(delegate)) {
+            return {
+                key: key,
+                enacted: false,
+                buckets: delegation.buckets,
+                delegates: delegates
+            }
+        }
         if (delegates.length) {
             var buckets = delegation.buckets.slice()
             var redist = Array.apply(null, Array(delegates.length)).map(Number.prototype.valueOf, 0)
@@ -90,6 +98,14 @@ Aplomb.prototype.removeDelegate = function (key, delegate) {
 
     var delegation = this.delegations.max()
     if (delegation.delegates.length > 1) {
+        if (!~delegation.delegates.indexOf(delegate)) {
+            return {
+                key: key,
+                enacted: false,
+                buckets: delegation.buckets,
+                delegates: delegation.delegates
+            }
+        }
         var delegates = delegation.delegates.slice()
         var buckets = delegation.buckets.slice()
 
